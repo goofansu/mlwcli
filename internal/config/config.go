@@ -7,6 +7,11 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+const (
+	ServiceMiniflux = "miniflux"
+	ServiceLinkding = "linkding"
+)
+
 type ServiceConfig struct {
 	Endpoint string `toml:"endpoint"`
 	APIKey   string `toml:"api_key"`
@@ -17,13 +22,19 @@ type Config struct {
 	Linkding ServiceConfig `toml:"linkding"`
 }
 
-func GetConfigPath() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".config", "cli", "config.toml")
+func GetConfigPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".config", "cli", "config.toml"), nil
 }
 
 func Load() (*Config, error) {
-	path := GetConfigPath()
+	path, err := GetConfigPath()
+	if err != nil {
+		return nil, err
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -34,7 +45,10 @@ func Load() (*Config, error) {
 }
 
 func Save(cfg *Config) error {
-	path := GetConfigPath()
+	path, err := GetConfigPath()
+	if err != nil {
+		return err
+	}
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
@@ -56,9 +70,9 @@ func RemoveService(service string) error {
 	}
 
 	switch service {
-	case "miniflux":
+	case ServiceMiniflux:
 		cfg.Miniflux = ServiceConfig{}
-	case "linkding":
+	case ServiceLinkding:
 		cfg.Linkding = ServiceConfig{}
 	default:
 		return nil
@@ -69,7 +83,10 @@ func RemoveService(service string) error {
 	}
 
 	if cfg.Miniflux.Endpoint == "" && cfg.Linkding.Endpoint == "" {
-		path := GetConfigPath()
+		path, err := GetConfigPath()
+		if err != nil {
+			return err
+		}
 		return os.Remove(path)
 	}
 

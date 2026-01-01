@@ -39,25 +39,50 @@ Configuration is stored in `~/.config/cli/config.toml`.
 Add a new bookmark:
 
 ```bash
-cli links add https://example.com
+cli add bookmark https://example.com
 ```
 
 Add a bookmark with notes:
 
 ```bash
-cli links add https://example.com --notes "Interesting article"
+cli add bookmark https://example.com --notes "Interesting article"
 ```
 
 Add a bookmark with tags:
 
 ```bash
-cli links add https://example.com --tags "golang api"
+cli add bookmark https://example.com --tags "golang api"
 ```
 
 Add a bookmark with both notes and tags:
 
 ```bash
-cli links add https://example.com --notes "Great resource" --tags "dev tools"
+cli add bookmark https://example.com --notes "Great resource" --tags "dev tools"
+```
+
+List bookmarks:
+
+```bash
+cli list bookmarks [OPTIONS]
+```
+
+**Options:**
+- `--limit <n>`: Maximum number of results (default: 10)
+- `--search <query>`: Search through bookmarks with query text
+
+Examples:
+```bash
+# List all bookmarks
+cli list bookmarks
+
+# List bookmarks with limit
+cli list bookmarks --limit 10
+
+# Search bookmarks
+cli list bookmarks --search "golang"
+
+# Combine options
+cli list bookmarks --search "api" --limit 20
 ```
 
 ### Manage Feeds (Miniflux)
@@ -65,36 +90,50 @@ cli links add https://example.com --notes "Great resource" --tags "dev tools"
 Add a new feed:
 
 ```bash
-cli feeds add https://example.com/feed.xml
+cli add feed https://example.com/feed.xml
+```
+
+Add a feed to a specific category:
+
+```bash
+cli add feed https://example.com/feed.xml --category-id 5
+```
+
+Note: Before adding a feed, verify that the URL returns valid RSS/Atom XML. Use a tool like `curl` or a browser to validate the feed first. If `--category-id` is not specified, the feed will be added to category 1 by default.
+
+List feeds:
+
+```bash
+cli list feeds
 ```
 
 List entries:
 
 ```bash
-cli feeds list
+cli list entries
 ```
 
-List with options:
+List entries with options:
 
 ```bash
 # List all entries (default is unread only)
-cli feeds list --all
+cli list entries --all
 
 # Search entries
-cli feeds list --search "query text"
+cli list entries --search "query text"
 
 # List starred entries
-cli feeds list --starred
+cli list entries --starred
 
 # Limit results
-cli feeds list --limit 10
+cli list entries --limit 10
 
-# Output in JSON format
-cli feeds list --json
+# Filter by feed ID
+cli list entries --feed-id 42
 
 # Combine options
-cli feeds list --all --starred --limit 20
-cli feeds list --search "golang" --limit 50
+cli list entries --all --starred --limit 20
+cli list entries --search "golang" --limit 50
 ```
 
 ### Logout
@@ -119,9 +158,3 @@ api_key = "your_api_key"
 endpoint = "https://linkding.example.com"
 api_key = "your_api_key"
 ```
-
-## Requirements
-
-- Go 1.25.4 or later
-- A running Miniflux instance (for feed management)
-- A running Linkding instance (for bookmark management)

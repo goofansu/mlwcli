@@ -2,12 +2,12 @@ package auth
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/goofansu/cli/internal/config"
-	linkdingclient "github.com/goofansu/cli/internal/linkding"
+	"github.com/goofansu/cli/internal/linkding"
 	"github.com/goofansu/cli/internal/miniflux"
-	linkdinglib "github.com/piero-vic/go-linkding"
 )
 
 func Login(service, endpoint, apiKey string) error {
@@ -16,70 +16,49 @@ func Login(service, endpoint, apiKey string) error {
 	apiKey = strings.TrimSpace(apiKey)
 
 	switch service {
-	case "miniflux":
-		cfg := config.ServiceConfig{
-			Endpoint: endpoint,
-			APIKey:   apiKey,
+	case config.ServiceMiniflux:
+		if err := miniflux.Validate(endpoint, apiKey); err != nil {
+			return fmt.Errorf("failed to verify miniflux connection: %w", err)
 		}
-
-		client, err := miniflux.NewClient(endpoint, apiKey)
-		if err != nil {
-			return fmt.Errorf("failed to create miniflux client: %w", err)
+	case config.ServiceLinkding:
+		if err := linkding.Validate(endpoint, apiKey); err != nil {
+			return fmt.Errorf("failed to verify linkding connection: %w", err)
 		}
-
-		if _, err := client.Me(); err != nil {
-			return fmt.Errorf("failed to verify connection: %w", err)
-		}
-
-		appCfg, err := config.Load()
-		if err != nil && !strings.Contains(err.Error(), "no such file") {
-			return fmt.Errorf("failed to load config: %w", err)
-		}
-		if appCfg == nil {
-			appCfg = &config.Config{}
-		}
-		appCfg.Miniflux = cfg
-
-		if err := config.Save(appCfg); err != nil {
-			return fmt.Errorf("failed to save config: %w", err)
-		}
-
-		fmt.Println("✓ Configuration saved successfully")
-		fmt.Println("✓ Connection verified")
-
-	case "linkding":
-		cfg := config.ServiceConfig{
-			Endpoint: endpoint,
-			APIKey:   apiKey,
-		}
-
-		client, err := linkdingclient.NewClient(endpoint, apiKey)
-		if err != nil {
-			return fmt.Errorf("failed to create linkding client: %w", err)
-		}
-
-		if _, err := client.ListBookmarks(linkdinglib.ListBookmarksParams{}); err != nil {
-			return fmt.Errorf("failed to verify connection: %w", err)
-		}
-
-		appCfg, err := config.Load()
-		if err != nil && !strings.Contains(err.Error(), "no such file") {
-			return fmt.Errorf("failed to load config: %w", err)
-		}
-		if appCfg == nil {
-			appCfg = &config.Config{}
-		}
-		appCfg.Linkding = cfg
-
-		if err := config.Save(appCfg); err != nil {
-			return fmt.Errorf("failed to save config: %w", err)
-		}
-
-		fmt.Println("✓ Configuration saved successfully")
-		fmt.Println("✓ Connection verified")
-
 	default:
-		return fmt.Errorf("invalid service: %s (must be 'miniflux' or 'linkding')", service)
+		return fmt.Errorf("invalid service: %s (must be '%s' or '%s')", service, config.ServiceMiniflux, config.ServiceLinkding)
+	}
+
+	if err := saveServiceConfig(service, endpoint, apiKey); err != nil {
+		return err
+	}
+	fmt.Println("✓ Configuration saved successfully")
+
+	return nil
+}
+
+func saveServiceConfig(service, endpoint, apiKey string) error {
+	cfg := config.ServiceConfig{
+		Endpoint: endpoint,
+		APIKey:   apiKey,
+	}
+
+	appCfg, err := config.Load()
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+	if appCfg == nil {
+		appCfg = &config.Config{}
+	}
+
+	switch service {
+	case config.ServiceMiniflux:
+		appCfg.Miniflux = cfg
+	case config.ServiceLinkding:
+		appCfg.Linkding = cfg
+	}
+
+	if err := config.Save(appCfg); err != nil {
+		return fmt.Errorf("failed to save config: %w", err)
 	}
 
 	return nil
@@ -89,13 +68,13 @@ func Logout(service string) error {
 	service = strings.ToLower(strings.TrimSpace(service))
 
 	switch service {
-	case "miniflux", "linkding":
+	case config.ServiceMiniflux, config.ServiceLinkding:
 		if err := config.RemoveService(service); err != nil {
 			return fmt.Errorf("failed to remove %s config: %w", service, err)
 		}
 		fmt.Printf("✓ Logged out from %s successfully\n", service)
 	default:
-		return fmt.Errorf("invalid service: %s (must be 'miniflux' or 'linkding')", service)
+		return fmt.Errorf("invalid service: %s (must be '%s' or '%s')", service, config.ServiceMiniflux, config.ServiceLinkding)
 	}
 
 	return nil

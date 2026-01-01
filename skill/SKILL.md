@@ -32,10 +32,8 @@ cli login miniflux --endpoint https://miniflux.example.com --api-key YOUR_API_KE
 
 **Linkding:**
 ```bash
-cli login linkding --endpoint https://linkding.example.com --api-key YOUR_API_TOKEN
+cli login linkding --endpoint https://linkding.example.com --api-key YOUR_API_KEY
 ```
-
-The configuration is saved to `~/.config/cli/config.toml` and verified automatically.
 
 ### Logout
 
@@ -58,30 +56,47 @@ cli logout linkding
 #### Add a New Bookmark
 
 ```bash
-cli links add <url> [OPTIONS]
+cli add bookmark <url> [OPTIONS]
 ```
 
 Add a new bookmark to your Linkding instance.
 
-**Note:** If a bookmark with the same URL already exists, it will be edited/updated with the provided notes and tags instead of creating a duplicate.
-
-**Options:**
-- `--notes <text>`: Optional notes for the bookmark (simple string)
-- `--tags <tags>`: Optional tags separated by spaces (same convention as Linkding web UI)
-
 Examples:
 ```bash
 # Simple bookmark
-cli links add https://example.com
+cli add bookmark https://example.com
 
 # Bookmark with notes
-cli links add https://example.com --notes "Interesting article"
+cli add bookmark https://example.com --notes "Interesting article"
 
 # Bookmark with tags
-cli links add https://example.com --tags "golang api"
+cli add bookmark https://example.com --tags "golang api"
 
 # Bookmark with notes and tags
-cli links add https://example.com --notes "Great resource" --tags "dev tools"
+cli add bookmark https://example.com --notes "Great resource" --tags "dev tools"
+```
+
+#### List Bookmarks
+
+```bash
+cli list bookmarks [OPTIONS]
+```
+
+List bookmarks from your Linkding instance.
+
+Examples:
+```bash
+# List all bookmarks
+cli list bookmarks
+
+# List bookmarks with limit
+cli list bookmarks --limit 10
+
+# Search bookmarks
+cli list bookmarks --search "golang"
+
+# Combine options
+cli list bookmarks --search "api" --limit 20
 ```
 
 ### Manage Feeds (Miniflux)
@@ -89,69 +104,63 @@ cli links add https://example.com --notes "Great resource" --tags "dev tools"
 #### Add a New Feed
 
 ```bash
-cli feeds add <url>
+cli add feed <url> [OPTIONS]
 ```
 
 Add a new RSS/Atom feed to your Miniflux instance.
 
 **Important:** Before adding a feed, verify that the URL returns valid RSS/Atom XML. The Miniflux instance may be rate limited by the target server if it repeatedly attempts to fetch invalid or non-existent feed URLs. Use a tool like `curl` or a browser to validate the feed first.
 
-Example:
+Examples:
 ```bash
-cli feeds add https://example.com/feed.xml
+# Add feed to default category (category 1)
+cli add feed https://example.com/feed.xml
+
+# Add feed to a specific category
+cli add feed https://example.com/feed.xml --category-id 5
 ```
 
 #### List Entries
 
 ```bash
-cli feeds list [OPTIONS]
+cli list entries [OPTIONS]
 ```
 
 List feed entries (ordered by publication date, newest first). Default shows only unread entries.
 
-**Options:**
-- `--limit <n>`: Maximum number of results (default: 30)
-- `--search <query>`: Search through entries with query text
-- `--starred`: Filter by starred entries only
-- `--all`: List all entries (default is unread only)
-- `--json`: Output in JSON format
-
 Examples:
 ```bash
-# List latest 30 unread entries
-cli feeds list
+# List latest 10 unread entries
+cli list entries
 
 # List all entries
-cli feeds list --all
+cli list entries --all
 
 # Search entries
-cli feeds list --search "golang"
+cli list entries --search "golang"
 
 # List starred entries with limit
-cli feeds list --starred --limit 50
+cli list entries --starred --limit 50
+
+# Filter by feed ID
+cli list entries --feed-id 42
 
 # Combine multiple filters
-cli feeds list --all --search "golang" --limit 20
-cli feeds list --search "golang" --json
+cli list entries --all --search "golang" --limit 20
 ```
 
-## Configuration
+#### List Feeds
 
-Authentication credentials are stored in `~/.config/cli/config.toml` with the following format:
-
-```toml
-[miniflux]
-endpoint = "https://miniflux.example.com"
-api_key = "your-miniflux-api-key"
-
-[linkding]
-endpoint = "https://linkding.example.com"
-api_key = "your-linkding-api-token"
+```bash
+cli list feeds
 ```
 
-## Error Handling
+List all subscribed feeds.
 
-If you see "not logged in" errors, run `cli login <service>` to set up credentials for that service.
+Example:
+```bash
+cli list feeds
+```
 
 ## Help
 
@@ -161,7 +170,11 @@ Display help for any command:
 cli --help
 cli login --help
 cli logout --help
-cli links add --help
-cli feeds add --help
-cli feeds list --help
+cli add --help
+cli add feed --help
+cli add bookmark --help
+cli list --help
+cli list feeds --help
+cli list entries --help
+cli list bookmarks --help
 ```

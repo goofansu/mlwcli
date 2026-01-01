@@ -1,9 +1,42 @@
 package linkding
 
 import (
-	"github.com/piero-vic/go-linkding"
+	api "github.com/piero-vic/go-linkding"
 )
 
-func NewClient(endpoint, apiKey string) (*linkding.Client, error) {
-	return linkding.NewClient(endpoint, apiKey), nil
+type CreateBookmarkOptions struct {
+	URL      string
+	Notes    string
+	TagNames []string
+}
+
+type ListBookmarksOptions struct {
+	Query string
+	Limit int
+}
+
+func CreateBookmark(endpoint, apiKey string, opts CreateBookmarkOptions) (*api.Bookmark, error) {
+	client := api.NewClient(endpoint, apiKey)
+
+	req := api.CreateBookmarkRequest{
+		URL:      opts.URL,
+		Notes:    opts.Notes,
+		TagNames: opts.TagNames,
+	}
+
+	return client.CreateBookmark(req)
+}
+
+func ListBookmarks(endpoint, apiKey string, opts ListBookmarksOptions) (*api.ListBookmarksResponse, error) {
+	client := api.NewClient(endpoint, apiKey)
+	return client.ListBookmarks(api.ListBookmarksParams{
+		Query: opts.Query,
+		Limit: opts.Limit,
+	})
+}
+
+func Validate(endpoint, apiKey string) error {
+	client := api.NewClient(endpoint, apiKey)
+	_, err := client.GetUserPreferences()
+	return err
 }

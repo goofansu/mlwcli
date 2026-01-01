@@ -6,20 +6,37 @@ import (
 
 	flags "github.com/jessevdk/go-flags"
 
+	"github.com/goofansu/cli/internal/app"
 	"github.com/goofansu/cli/internal/auth"
 	"github.com/goofansu/cli/internal/config"
-	"github.com/goofansu/cli/internal/linkding"
-	"github.com/goofansu/cli/internal/miniflux"
 )
 
 type Options struct {
 	Login  LoginCommand  `command:"login" description:"Authenticate with a service"`
 	Logout LogoutCommand `command:"logout" description:"Remove credentials for a service"`
-	Links  LinksCommand  `command:"links" description:"Manage bookmarks (linkding)"`
-	Feeds  FeedsCommand  `command:"feeds" description:"Manage feeds (miniflux)"`
+	Add    AddCommand    `command:"add" description:"Add a resource (feed or bookmark)"`
+	List   ListCommand   `command:"list" description:"List resources (feeds, entries, or bookmarks)"`
+}
+
+type AddCommand struct {
+	BaseCommand
+	Feed     AddFeedCommand     `command:"feed" description:"Add a feed (miniflux)"`
+	Bookmark AddBookmarkCommand `command:"bookmark" description:"Add a bookmark (linkding)"`
+}
+
+type ListCommand struct {
+	BaseCommand
+	Feeds     ListFeedsCommand     `command:"feeds" description:"List feeds (miniflux)"`
+	Entries   ListEntriesCommand   `command:"entries" description:"List entries (miniflux)"`
+	Bookmarks ListBookmarksCommand `command:"bookmarks" description:"List bookmarks (linkding)"`
+}
+
+type BaseCommand struct {
+	App *app.App
 }
 
 type LoginCommand struct {
+	BaseCommand
 	Args struct {
 		Service string `positional-arg-name:"service" description:"Service name (miniflux or linkding)" required:"yes"`
 	} `positional-args:"yes"`
@@ -28,16 +45,22 @@ type LoginCommand struct {
 }
 
 type LogoutCommand struct {
+	BaseCommand
 	Args struct {
 		Service string `positional-arg-name:"service" description:"Service name (miniflux or linkding)" required:"yes"`
 	} `positional-args:"yes"`
 }
 
-type LinksCommand struct {
-	Add AddLinksCommand `command:"add" description:"Add a new bookmark"`
+type AddFeedCommand struct {
+	BaseCommand
+	Args struct {
+		URL string `positional-arg-name:"url" description:"URL of the feed to subscribe to" required:"yes"`
+	} `positional-args:"yes"`
+	CategoryID int64 `long:"category-id" description:"Miniflux category ID (defaults to 1)"`
 }
 
-type AddLinksCommand struct {
+type AddBookmarkCommand struct {
+	BaseCommand
 	Args struct {
 		URL string `positional-arg-name:"url" description:"URL of the bookmark to add" required:"yes"`
 	} `positional-args:"yes"`
@@ -45,23 +68,23 @@ type AddLinksCommand struct {
 	Tags  string `long:"tags" description:"Optional tags separated by spaces"`
 }
 
-type FeedsCommand struct {
-	Add  AddFeedsCommand  `command:"add" description:"Add a new feed"`
-	List ListFeedsCommand `command:"list" description:"List entries"`
-}
-
-type AddFeedsCommand struct {
-	Args struct {
-		URL string `positional-arg-name:"url" description:"URL of the feed to add" required:"yes"`
-	} `positional-args:"yes"`
-}
-
 type ListFeedsCommand struct {
-	Limit   int    `long:"limit" description:"Maximum number of results" default:"30"`
+	BaseCommand
+}
+
+type ListEntriesCommand struct {
+	BaseCommand
+	FeedID  int    `long:"feed-id" value-name:"ID" description:"Filter by feed ID"`
+	Limit   int    `long:"limit" description:"Maximum number of results" default:"10"`
 	Search  string `long:"search" description:"Search query text"`
 	Starred bool   `long:"starred" description:"Filter by starred entries"`
 	All     bool   `long:"all" description:"List all entries (default is unread only)"`
-	JSON    bool   `long:"json" description:"Output in JSON format"`
+}
+
+type ListBookmarksCommand struct {
+	BaseCommand
+	Limit  int    `long:"limit" description:"Maximum number of results" default:"10"`
+	Search string `long:"search" description:"Search query text"`
 }
 
 func (c *LoginCommand) Execute(_ []string) error {
@@ -72,55 +95,53 @@ func (c *LogoutCommand) Execute(_ []string) error {
 	return auth.Logout(c.Args.Service)
 }
 
-func (c *AddLinksCommand) Execute(_ []string) error {
-	url := c.Args.URL
-	cfg, err := config.Load()
-	if err != nil {
-		return fmt.Errorf("failed to load config (run 'cli login linkding' first): %w", err)
+func (c *AddFeedCommand) Execute(_ []string) error {
+	opts := app.AddFeedOptions{
+		URL:        c.Args.URL,
+		CategoryID: c.CategoryID,
 	}
-	if cfg.Linkding.Endpoint == "" {
-		return fmt.Errorf("not logged in to linkding (run 'cli login linkding' first)")
-	}
-	client, err := linkding.NewClient(cfg.Linkding.Endpoint, cfg.Linkding.APIKey)
-	if err != nil {
-		return fmt.Errorf("failed to create linkding client: %w", err)
-	}
-	return linkding.AddBookmark(client, url, c.Notes, c.Tags)
+
+	return c.App.AddFeed(opts)
 }
 
-func (c *AddFeedsCommand) Execute(_ []string) error {
-	feedURL := c.Args.URL
-	cfg, err := config.Load()
-	if err != nil {
-		return fmt.Errorf("failed to load config (run 'cli login miniflux' first): %w", err)
+func (c *AddBookmarkCommand) Execute(_ []string) error {
+	opts := app.AddBookmarkOptions{
+		URL:   c.Args.URL,
+		Notes: c.Notes,
+		Tags:  c.Tags,
 	}
-	if cfg.Miniflux.Endpoint == "" {
-		return fmt.Errorf("not logged in to miniflux (run 'cli login miniflux' first)")
-	}
-	client, err := miniflux.NewClient(cfg.Miniflux.Endpoint, cfg.Miniflux.APIKey)
-	if err != nil {
-		return fmt.Errorf("failed to create miniflux client: %w", err)
-	}
-	return miniflux.AddFeed(client, feedURL)
+
+	return c.App.AddBookmark(opts)
 }
 
 func (c *ListFeedsCommand) Execute(_ []string) error {
-	cfg, err := config.Load()
-	if err != nil {
-		return fmt.Errorf("failed to load config (run 'cli login miniflux' first): %w", err)
-	}
-	if cfg.Miniflux.Endpoint == "" {
-		return fmt.Errorf("not logged in to miniflux (run 'cli login miniflux' first)")
-	}
-	client, err := miniflux.NewClient(cfg.Miniflux.Endpoint, cfg.Miniflux.APIKey)
-	if err != nil {
-		return fmt.Errorf("failed to create miniflux client: %w", err)
-	}
+	opts := app.ListFeedsOptions{}
+	return c.App.ListFeeds(opts)
+}
+
+func (c *ListEntriesCommand) Execute(_ []string) error {
 	starred := ""
 	if c.Starred {
 		starred = "1"
 	}
-	return miniflux.ListEntries(client, c.Search, starred, c.Limit, c.All, c.JSON)
+
+	opts := app.ListEntriesOptions{
+		FeedID:  int64(c.FeedID),
+		Search:  c.Search,
+		Starred: starred,
+		Limit:   c.Limit,
+		All:     c.All,
+	}
+
+	return c.App.ListEntries(opts)
+}
+
+func (c *ListBookmarksCommand) Execute(_ []string) error {
+	opts := app.ListBookmarksOptions{
+		Query: c.Search,
+		Limit: c.Limit,
+	}
+	return c.App.ListBookmarks(opts)
 }
 
 func (c *LoginCommand) Usage() string {
@@ -131,23 +152,49 @@ func (c *LogoutCommand) Usage() string {
 	return "<service>"
 }
 
-func (c *AddLinksCommand) Usage() string {
+func (c *AddFeedCommand) Usage() string {
 	return "<url>"
 }
 
-func (c *AddFeedsCommand) Usage() string {
+func (c *AddBookmarkCommand) Usage() string {
 	return "<url>"
 }
 
 func (c *ListFeedsCommand) Usage() string {
+	return ""
+}
+
+func (c *ListEntriesCommand) Usage() string {
 	return "[OPTIONS]"
 }
 
+func (c *ListBookmarksCommand) Usage() string {
+	return ""
+}
+
 func main() {
+	cfg, err := config.Load()
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "warning: failed to load config: %v\n", err)
+	}
+	if cfg == nil {
+		cfg = &config.Config{}
+	}
+
+	application := app.New(cfg)
+
 	opts := Options{}
+	opts.Login.App = application
+	opts.Logout.App = application
+	opts.Add.Feed.App = application
+	opts.Add.Bookmark.App = application
+	opts.List.Feeds.App = application
+	opts.List.Entries.App = application
+	opts.List.Bookmarks.App = application
+
 	parser := flags.NewParser(&opts, flags.HelpFlag|flags.PassDoubleDash)
-	parser.ShortDescription = "Unified bookmarks and feeds command-line interface"
-	parser.LongDescription = "cli provides a unified CLI for managing bookmarks (linkding) and feeds (miniflux).\n\nAuthenticate with login, then use links or feeds subcommands.\n\nExamples:\n  cli login miniflux --endpoint https://miniflux.example.com --api-key YOUR_API_KEY\n  cli login linkding --endpoint https://linkding.example.com --api-key YOUR_API_KEY\n  cli links add https://example.com\n  cli links add https://example.com --notes \"Interesting article\" --tags \"golang api\"\n  cli feeds add https://example.com/feed.xml\n  cli feeds list\n  cli feeds list --search \"golang\"\n  cli logout miniflux\n  cli logout linkding"
+	parser.ShortDescription = "My command-line tool for agents"
+	parser.LongDescription = "Manage bookmarks and RSS feeds from terminal.\n\nExamples:\ncli login linkding --endpoint https://linkding.example.com --api-key YOUR_API_KEY\ncli login miniflux --endpoint https://miniflux.example.com --api-key YOUR_API_KEY\ncli add bookmark https://example.com --tags \"cool useful\"\ncli list bookmarks\ncli add feed https://blog.example.com/feed.xml\ncli list feeds\ncli list entries --starred"
 
 	if len(os.Args) == 1 {
 		parser.WriteHelp(os.Stdout)
