@@ -79,6 +79,7 @@ type ListEntriesCommand struct {
 	Search  string `long:"search" description:"Search query text"`
 	Status  string `long:"status" value-name:"status" description:"Filter by entry status (read, unread, removed)" default:"unread"`
 	Starred bool   `long:"starred" description:"Filter by starred entries"`
+	FeedID  int64  `long:"feed-id" description:"Filter by feed ID"`
 }
 
 type ListBookmarksCommand struct {
@@ -122,6 +123,7 @@ func (c *ListEntriesCommand) Execute(_ []string) error {
 	}
 
 	opts := app.ListEntriesOptions{
+		FeedID:  c.FeedID,
 		Search:  c.Search,
 		Limit:   c.Limit,
 		Status:  c.Status,

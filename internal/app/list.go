@@ -9,6 +9,7 @@ import (
 )
 
 type ListEntriesOptions struct {
+	FeedID  int64
 	Search  string
 	Limit   int
 	Status  string
@@ -26,6 +27,7 @@ type ListBookmarksOptions struct {
 
 func (a *App) ListEntries(opts ListEntriesOptions) error {
 	result, err := miniflux.Entries(a.Config.Miniflux.Endpoint, a.Config.Miniflux.APIKey, miniflux.ListEntriesOptions{
+		FeedID:  opts.FeedID,
 		Search:  opts.Search,
 		Limit:   opts.Limit,
 		Status:  opts.Status,
