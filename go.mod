@@ -9,4 +9,8 @@ require (
 	miniflux.app/v2 v2.2.15
 )
 
-require golang.org/x/sys v0.39.0 // indirect
+require (
+	github.com/itchyny/gojq v0.12.18 // indirect
+	github.com/itchyny/timefmt-go v0.1.7 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+)

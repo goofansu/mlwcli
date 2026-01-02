@@ -15,7 +15,7 @@ type Options struct {
 	Login  LoginCommand  `command:"login" description:"Authenticate with a service"`
 	Logout LogoutCommand `command:"logout" description:"Remove credentials for a service"`
 	Add    AddCommand    `command:"add" description:"Add a resource (feed or bookmark)"`
-	List   ListCommand   `command:"list" description:"List resources (feeds, entries, or bookmarks)"`
+	List   ListCommand   `command:"list" description:"List resources (entries or bookmarks)"`
 }
 
 type AddCommand struct {
@@ -26,13 +26,17 @@ type AddCommand struct {
 
 type ListCommand struct {
 	BaseCommand
-	Feeds     ListFeedsCommand     `command:"feeds" description:"List feeds (miniflux)"`
 	Entries   ListEntriesCommand   `command:"entries" description:"List entries (miniflux)"`
 	Bookmarks ListBookmarksCommand `command:"bookmarks" description:"List bookmarks (linkding)"`
 }
 
 type BaseCommand struct {
 	App *app.App
+}
+
+type JSONOutputOptions struct {
+	JSON string `long:"json" value-name:"fields" description:"Output JSON with the specified fields (comma-separated)"`
+	JQ   string `long:"jq" value-name:"expression" description:"Filter JSON output using a jq expression (requires --json)"`
 }
 
 type LoginCommand struct {
@@ -68,21 +72,18 @@ type AddBookmarkCommand struct {
 	Tags  string `long:"tags" description:"Optional tags separated by spaces"`
 }
 
-type ListFeedsCommand struct {
-	BaseCommand
-}
-
 type ListEntriesCommand struct {
 	BaseCommand
-	FeedID  int    `long:"feed-id" value-name:"ID" description:"Filter by feed ID"`
+	JSONOutputOptions
 	Limit   int    `long:"limit" description:"Maximum number of results" default:"10"`
 	Search  string `long:"search" description:"Search query text"`
+	Status  string `long:"status" value-name:"status" description:"Filter by entry status (read, unread, removed)" default:"unread"`
 	Starred bool   `long:"starred" description:"Filter by starred entries"`
-	All     bool   `long:"all" description:"List all entries (default is unread only)"`
 }
 
 type ListBookmarksCommand struct {
 	BaseCommand
+	JSONOutputOptions
 	Limit  int    `long:"limit" description:"Maximum number of results" default:"10"`
 	Search string `long:"search" description:"Search query text"`
 }
@@ -114,11 +115,6 @@ func (c *AddBookmarkCommand) Execute(_ []string) error {
 	return c.App.AddBookmark(opts)
 }
 
-func (c *ListFeedsCommand) Execute(_ []string) error {
-	opts := app.ListFeedsOptions{}
-	return c.App.ListFeeds(opts)
-}
-
 func (c *ListEntriesCommand) Execute(_ []string) error {
 	starred := ""
 	if c.Starred {
@@ -126,11 +122,12 @@ func (c *ListEntriesCommand) Execute(_ []string) error {
 	}
 
 	opts := app.ListEntriesOptions{
-		FeedID:  int64(c.FeedID),
 		Search:  c.Search,
-		Starred: starred,
 		Limit:   c.Limit,
-		All:     c.All,
+		Status:  c.Status,
+		Starred: starred,
+		JSON:    c.JSON,
+		JQ:      c.JQ,
 	}
 
 	return c.App.ListEntries(opts)
@@ -140,6 +137,8 @@ func (c *ListBookmarksCommand) Execute(_ []string) error {
 	opts := app.ListBookmarksOptions{
 		Query: c.Search,
 		Limit: c.Limit,
+		JSON:  c.JSON,
+		JQ:    c.JQ,
 	}
 	return c.App.ListBookmarks(opts)
 }
@@ -158,10 +157,6 @@ func (c *AddFeedCommand) Usage() string {
 
 func (c *AddBookmarkCommand) Usage() string {
 	return "<url>"
-}
-
-func (c *ListFeedsCommand) Usage() string {
-	return ""
 }
 
 func (c *ListEntriesCommand) Usage() string {
@@ -188,13 +183,12 @@ func main() {
 	opts.Logout.App = application
 	opts.Add.Feed.App = application
 	opts.Add.Bookmark.App = application
-	opts.List.Feeds.App = application
 	opts.List.Entries.App = application
 	opts.List.Bookmarks.App = application
 
 	parser := flags.NewParser(&opts, flags.HelpFlag|flags.PassDoubleDash)
 	parser.ShortDescription = "My command-line tool for agents"
-	parser.LongDescription = "Manage bookmarks and RSS feeds from terminal.\n\nExamples:\ncli login linkding --endpoint https://linkding.example.com --api-key YOUR_API_KEY\ncli login miniflux --endpoint https://miniflux.example.com --api-key YOUR_API_KEY\ncli add bookmark https://example.com --tags \"cool useful\"\ncli list bookmarks\ncli add feed https://blog.example.com/feed.xml\ncli list feeds\ncli list entries --starred"
+	parser.LongDescription = "Manage bookmarks and RSS feeds from terminal.\n\nExamples:\ncli login linkding --endpoint https://linkding.example.com --api-key YOUR_API_KEY\ncli login miniflux --endpoint https://miniflux.example.com --api-key YOUR_API_KEY\ncli add bookmark https://example.com --tags \"cool useful\"\ncli list bookmarks\ncli add feed https://blog.example.com/feed.xml\ncli list entries"
 
 	if len(os.Args) == 1 {
 		parser.WriteHelp(os.Stdout)

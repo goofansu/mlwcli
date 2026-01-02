@@ -25,7 +25,7 @@ type ListEntriesOptions struct {
 	Search  string
 	Starred string
 	Limit   int
-	All     bool
+	Status  string
 }
 
 func Entries(endpoint, apiKey string, opts ListEntriesOptions) (*api.EntryResultSet, error) {
@@ -43,8 +43,8 @@ func Entries(endpoint, apiKey string, opts ListEntriesOptions) (*api.EntryResult
 	if opts.Starred != "" {
 		filter.Starred = opts.Starred
 	}
-	if !opts.All {
-		filter.Status = "unread"
+	if opts.Status != "" {
+		filter.Status = opts.Status
 	}
 
 	return client.Entries(filter)
