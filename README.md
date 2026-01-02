@@ -1,6 +1,11 @@
 # cli
 
-A unified command-line interface for managing bookmarks (via Linkding) and feeds (via Miniflux).
+My command-line tool built for agents.
+
+## Features
+
+- Manage bookmarks via Linkding
+- Manage feeds and entries via Miniflux
 
 ## Installation
 
