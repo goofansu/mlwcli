@@ -12,22 +12,11 @@ import (
 )
 
 type Options struct {
-	Login  LoginCommand  `command:"login" description:"Authenticate with a service"`
-	Logout LogoutCommand `command:"logout" description:"Remove credentials for a service"`
-	Add    AddCommand    `command:"add" description:"Add a resource (feed or bookmark)"`
-	List   ListCommand   `command:"list" description:"List resources (entries or bookmarks)"`
-}
-
-type AddCommand struct {
-	BaseCommand
-	Feed     AddFeedCommand     `command:"feed" description:"Add a feed (miniflux)"`
-	Bookmark AddBookmarkCommand `command:"bookmark" description:"Add a bookmark (linkding)"`
-}
-
-type ListCommand struct {
-	BaseCommand
-	Entries   ListEntriesCommand   `command:"entries" description:"List entries (miniflux)"`
-	Bookmarks ListBookmarksCommand `command:"bookmarks" description:"List bookmarks (linkding)"`
+	Login    LoginCommand    `command:"login" description:"Authenticate with a service"`
+	Logout   LogoutCommand   `command:"logout" description:"Remove credentials for a service"`
+	Bookmark BookmarkCommand `command:"bookmark" description:"Manage bookmarks (linkding)"`
+	Feed     FeedCommand     `command:"feed" description:"Manage feeds (miniflux)"`
+	Entry    EntryCommand    `command:"entry" description:"Manage entries (miniflux)"`
 }
 
 type BaseCommand struct {
@@ -55,7 +44,7 @@ type LogoutCommand struct {
 	} `positional-args:"yes"`
 }
 
-type AddFeedCommand struct {
+type FeedAddCommand struct {
 	BaseCommand
 	Args struct {
 		URL string `positional-arg-name:"url" description:"URL of the feed to subscribe to" required:"yes"`
@@ -63,7 +52,7 @@ type AddFeedCommand struct {
 	CategoryID int64 `long:"category-id" description:"Miniflux category ID (defaults to 1)"`
 }
 
-type AddBookmarkCommand struct {
+type BookmarkAddCommand struct {
 	BaseCommand
 	Args struct {
 		URL string `positional-arg-name:"url" description:"URL of the bookmark to add" required:"yes"`
@@ -72,7 +61,7 @@ type AddBookmarkCommand struct {
 	Tags  string `long:"tags" description:"Optional tags separated by spaces"`
 }
 
-type ListEntriesCommand struct {
+type EntryListCommand struct {
 	BaseCommand
 	JSONOutputOptions
 	Limit   int    `long:"limit" description:"Maximum number of results" default:"10"`
@@ -83,12 +72,28 @@ type ListEntriesCommand struct {
 	FeedID  int64  `long:"feed-id" description:"Filter by feed ID"`
 }
 
-type ListBookmarksCommand struct {
+type BookmarkListCommand struct {
 	BaseCommand
 	JSONOutputOptions
 	Limit  int    `long:"limit" description:"Maximum number of results" default:"10"`
 	Offset int    `long:"offset" description:"Number of results to skip" default:"0"`
 	Search string `long:"search" description:"Search query text"`
+}
+
+type BookmarkCommand struct {
+	BaseCommand
+	Add  BookmarkAddCommand  `command:"add" description:"Add a bookmark (linkding)"`
+	List BookmarkListCommand `command:"list" description:"List bookmarks (linkding)"`
+}
+
+type FeedCommand struct {
+	BaseCommand
+	Add FeedAddCommand `command:"add" description:"Add a feed (miniflux)"`
+}
+
+type EntryCommand struct {
+	BaseCommand
+	List EntryListCommand `command:"list" description:"List entries (miniflux)"`
 }
 
 func (c *LoginCommand) Execute(_ []string) error {
@@ -99,7 +104,7 @@ func (c *LogoutCommand) Execute(_ []string) error {
 	return auth.Logout(c.Args.Service)
 }
 
-func (c *AddFeedCommand) Execute(_ []string) error {
+func (c *FeedAddCommand) Execute(_ []string) error {
 	opts := app.AddFeedOptions{
 		URL:        c.Args.URL,
 		CategoryID: c.CategoryID,
@@ -108,7 +113,7 @@ func (c *AddFeedCommand) Execute(_ []string) error {
 	return c.App.AddFeed(opts)
 }
 
-func (c *AddBookmarkCommand) Execute(_ []string) error {
+func (c *BookmarkAddCommand) Execute(_ []string) error {
 	opts := app.AddBookmarkOptions{
 		URL:   c.Args.URL,
 		Notes: c.Notes,
@@ -118,7 +123,7 @@ func (c *AddBookmarkCommand) Execute(_ []string) error {
 	return c.App.AddBookmark(opts)
 }
 
-func (c *ListEntriesCommand) Execute(_ []string) error {
+func (c *EntryListCommand) Execute(_ []string) error {
 	starred := ""
 	if c.Starred {
 		starred = "1"
@@ -138,7 +143,7 @@ func (c *ListEntriesCommand) Execute(_ []string) error {
 	return c.App.ListEntries(opts)
 }
 
-func (c *ListBookmarksCommand) Execute(_ []string) error {
+func (c *BookmarkListCommand) Execute(_ []string) error {
 	opts := app.ListBookmarksOptions{
 		Query:  c.Search,
 		Limit:  c.Limit,
@@ -157,19 +162,19 @@ func (c *LogoutCommand) Usage() string {
 	return "<service>"
 }
 
-func (c *AddFeedCommand) Usage() string {
+func (c *FeedAddCommand) Usage() string {
 	return "<url>"
 }
 
-func (c *AddBookmarkCommand) Usage() string {
+func (c *BookmarkAddCommand) Usage() string {
 	return "<url>"
 }
 
-func (c *ListEntriesCommand) Usage() string {
+func (c *EntryListCommand) Usage() string {
 	return "[OPTIONS]"
 }
 
-func (c *ListBookmarksCommand) Usage() string {
+func (c *BookmarkListCommand) Usage() string {
 	return "[OPTIONS]"
 }
 
@@ -187,14 +192,14 @@ func main() {
 	opts := Options{}
 	opts.Login.App = application
 	opts.Logout.App = application
-	opts.Add.Feed.App = application
-	opts.Add.Bookmark.App = application
-	opts.List.Entries.App = application
-	opts.List.Bookmarks.App = application
+	opts.Bookmark.Add.App = application
+	opts.Bookmark.List.App = application
+	opts.Feed.Add.App = application
+	opts.Entry.List.App = application
 
 	parser := flags.NewParser(&opts, flags.HelpFlag|flags.PassDoubleDash)
 	parser.ShortDescription = "My command-line tool for agents"
-	parser.LongDescription = "Manage bookmarks and RSS feeds from terminal.\n\nExamples:\ncli login linkding --endpoint https://linkding.example.com --api-key YOUR_API_KEY\ncli login miniflux --endpoint https://miniflux.example.com --api-key YOUR_API_KEY\ncli add bookmark https://example.com --tags \"cool useful\"\ncli list bookmarks\ncli add feed https://blog.example.com/feed.xml\ncli list entries"
+	parser.LongDescription = "Manage bookmarks and RSS feeds from terminal.\n\nExamples:\ncli login linkding --endpoint https://linkding.example.com --api-key YOUR_API_KEY\ncli login miniflux --endpoint https://miniflux.example.com --api-key YOUR_API_KEY\ncli bookmark add https://example.com --tags \"cool useful\"\ncli bookmark list\ncli feed add https://blog.example.com/feed.xml\ncli entry list"
 
 	if len(os.Args) == 1 {
 		parser.WriteHelp(os.Stdout)

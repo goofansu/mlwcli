@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/goofansu/cli/internal/format"
 	"github.com/goofansu/cli/internal/linkding"
-	"github.com/goofansu/cli/internal/miniflux"
 )
 
 type AddBookmarkOptions struct {
@@ -14,9 +14,12 @@ type AddBookmarkOptions struct {
 	Tags  string
 }
 
-type AddFeedOptions struct {
-	URL        string
-	CategoryID int64
+type ListBookmarksOptions struct {
+	Query  string
+	Limit  int
+	Offset int
+	JSON   string
+	JQ     string
 }
 
 func (a *App) AddBookmark(opts AddBookmarkOptions) error {
@@ -38,20 +41,19 @@ func (a *App) AddBookmark(opts AddBookmarkOptions) error {
 	return nil
 }
 
-func (a *App) AddFeed(opts AddFeedOptions) error {
-	categoryID := opts.CategoryID
-	if categoryID == 0 {
-		categoryID = 1 // Default to category 1 if not specified
-	}
-
-	feedID, err := miniflux.CreateFeed(a.Config.Miniflux.Endpoint, a.Config.Miniflux.APIKey, miniflux.CreateFeedOptions{
-		FeedURL:    opts.URL,
-		CategoryID: categoryID,
+func (a *App) ListBookmarks(opts ListBookmarksOptions) error {
+	result, err := linkding.ListBookmarks(a.Config.Linkding.Endpoint, a.Config.Linkding.APIKey, linkding.ListBookmarksOptions{
+		Query:  opts.Query,
+		Limit:  opts.Limit,
+		Offset: opts.Offset,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to create feed: %w", err)
+		return fmt.Errorf("failed to list bookmarks: %w", err)
 	}
 
-	fmt.Printf("✓ Feed created successfully (ID: %d)\n", feedID)
-	return nil
+	output := map[string]any{
+		"total": result.Count,
+		"items": result.Results,
+	}
+	return format.Output(output, opts.JSON, opts.JQ)
 }
