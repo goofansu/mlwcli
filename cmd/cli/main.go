@@ -29,17 +29,31 @@ type JSONOutputOptions struct {
 	JQ   string `long:"jq" value-name:"expression" description:"Filter JSON output using a jq expression (requires --json)"`
 }
 
-type LoginCommand struct {
+type LoginMinifluxCommand struct {
 	BaseCommand
-	Args struct {
-		Service string `positional-arg-name:"service" description:"Service name (miniflux, linkding, or wallabag)" required:"yes"`
-	} `positional-args:"yes"`
-	Endpoint     string `long:"endpoint" description:"Service endpoint URL" required:"yes"`
-	APIKey       string `long:"api-key" description:"API key (for miniflux or linkding)"`
-	ClientID     string `long:"client-id" description:"OAuth client ID (for wallabag)"`
-	ClientSecret string `long:"client-secret" description:"OAuth client secret (for wallabag)"`
-	Username     string `long:"username" description:"Username (for wallabag)"`
-	Password     string `long:"password" description:"Password (for wallabag)"`
+	Endpoint string `long:"endpoint" description:"Miniflux endpoint URL" required:"yes"`
+	APIKey   string `long:"api-key" description:"API key" required:"yes"`
+}
+
+type LoginLinkdingCommand struct {
+	BaseCommand
+	Endpoint string `long:"endpoint" description:"Linkding endpoint URL" required:"yes"`
+	APIKey   string `long:"api-key" description:"API key" required:"yes"`
+}
+
+type LoginWallabagCommand struct {
+	BaseCommand
+	Endpoint     string `long:"endpoint" description:"Wallabag endpoint URL" required:"yes"`
+	ClientID     string `long:"client-id" description:"OAuth client ID" required:"yes"`
+	ClientSecret string `long:"client-secret" description:"OAuth client secret" required:"yes"`
+	Username     string `long:"username" description:"Username" required:"yes"`
+	Password     string `long:"password" description:"Password" required:"yes"`
+}
+
+type LoginCommand struct {
+	Miniflux LoginMinifluxCommand `command:"miniflux" description:"Authenticate with Miniflux"`
+	Linkding LoginLinkdingCommand `command:"linkding" description:"Authenticate with Linkding"`
+	Wallabag LoginWallabagCommand `command:"wallabag" description:"Authenticate with Wallabag"`
 }
 
 type LogoutCommand struct {
@@ -127,21 +141,16 @@ type PageCommand struct {
 	List PageListCommand `command:"list" description:"List pages (wallabag)"`
 }
 
-func (c *LoginCommand) Execute(_ []string) error {
-	switch c.Args.Service {
-	case "miniflux", "linkding":
-		if c.APIKey == "" {
-			return fmt.Errorf("--api-key is required for %s", c.Args.Service)
-		}
-		return auth.Login(c.Args.Service, c.Endpoint, c.APIKey)
-	case "wallabag":
-		if c.ClientID == "" || c.ClientSecret == "" || c.Username == "" || c.Password == "" {
-			return fmt.Errorf("--client-id, --client-secret, --username, --password required for wallabag")
-		}
-		return auth.LoginWallabag(c.Endpoint, c.ClientID, c.ClientSecret, c.Username, c.Password)
-	default:
-		return fmt.Errorf("unknown service: %s", c.Args.Service)
-	}
+func (c *LoginMinifluxCommand) Execute(_ []string) error {
+	return auth.Login("miniflux", c.Endpoint, c.APIKey)
+}
+
+func (c *LoginLinkdingCommand) Execute(_ []string) error {
+	return auth.Login("linkding", c.Endpoint, c.APIKey)
+}
+
+func (c *LoginWallabagCommand) Execute(_ []string) error {
+	return auth.LoginWallabag(c.Endpoint, c.ClientID, c.ClientSecret, c.Username, c.Password)
 }
 
 func (c *LogoutCommand) Execute(_ []string) error {
@@ -232,10 +241,6 @@ func (c *PageListCommand) Execute(_ []string) error {
 	return c.App.ListPages(opts)
 }
 
-func (c *LoginCommand) Usage() string {
-	return "<service> [OPTIONS]"
-}
-
 func (c *LogoutCommand) Usage() string {
 	return "<service>"
 }
@@ -276,7 +281,9 @@ func main() {
 	application := app.New(cfg)
 
 	opts := Options{}
-	opts.Login.App = application
+	opts.Login.Miniflux.App = application
+	opts.Login.Linkding.App = application
+	opts.Login.Wallabag.App = application
 	opts.Logout.App = application
 	opts.Bookmark.Add.App = application
 	opts.Bookmark.List.App = application
