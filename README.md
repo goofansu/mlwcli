@@ -4,8 +4,9 @@ My command-line tool built for agents.
 
 ## Features
 
-- Manage bookmarks via Linkding
-- Manage feeds and entries via Miniflux
+- Manage bookmarks via [Linkding](https://linkding.link/)
+- Manage feeds via [Miniflux](https://miniflux.app/)
+- Manage pages via [Wallabag](https://wallabag.org/)
 
 ## Installation
 
@@ -24,8 +25,9 @@ go build -o cli cmd/cli/main.go
 ## Authentication
 
 ```bash
-cli login miniflux --endpoint <URL> --api-key <KEY>
-cli login linkding --endpoint <URL> --api-key <KEY>
+cli login miniflux -h
+cli login linkding -h
+cli login linkding -h
 ```
 
 ## Usage
