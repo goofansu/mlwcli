@@ -1,11 +1,11 @@
 ---
 name: cli
-description: Unified command-line interface for managing bookmarks (linkding), feeds (miniflux), and pages (wallabag). Use for authentication, managing bookmarks, and managing feeds.
+description: Unified command-line interface for managing links (linkding), feeds (miniflux), and pages (wallabag). Use for authentication, managing links, and managing feeds.
 ---
 
 # cli
 
-A unified command-line interface for managing bookmarks (via Linkding), feeds (via Miniflux), and pages (via Wallabag).
+A unified command-line interface for managing links (via Linkding), feeds (via Miniflux), and pages (via Wallabag).
 
 ## Critical Notes
 
@@ -16,12 +16,12 @@ A unified command-line interface for managing bookmarks (via Linkding), feeds (v
 ## Commands
 
 ```bash
-cli bookmark add <url>    # Add bookmark to Linkding
-cli bookmark list         # List bookmarks
-cli feed add <url>        # Add feed to Miniflux
-cli entry list            # List feed entries
-cli page add <url>        # Add page to Wallabag
-cli page list             # List pages
+cli link add <url>    # Add link to Linkding
+cli link list         # List links
+cli feed add <url>    # Add feed to Miniflux
+cli entry list        # List feed entries
+cli page add <url>    # Add page to Wallabag
+cli page list         # List pages
 ```
 
 Use `--help` on any command for options.
@@ -87,16 +87,16 @@ cli feed add <url>
 
 The URL must point to a valid RSS/Atom feed.
 
-### Add a Bookmark
+### Add a Link
 
 Basic:
 ```bash
-cli bookmark add <url>
+cli link add <url>
 ```
 
 With metadata:
 ```bash
-cli bookmark add <url> --notes 'Title: "Some Title"' --tags "tag1 tag2"
+cli link add <url> --notes 'Title: "Some Title"' --tags "tag1 tag2"
 ```
 
 Tags are space-separated within the quoted string.

@@ -4,19 +4,19 @@ import (
 	api "github.com/piero-vic/go-linkding"
 )
 
-type CreateBookmarkOptions struct {
+type CreateLinkOptions struct {
 	URL      string
 	Notes    string
 	TagNames []string
 }
 
-type ListBookmarksOptions struct {
+type ListLinksOptions struct {
 	Query  string
 	Limit  int
 	Offset int
 }
 
-func CreateBookmark(endpoint, apiKey string, opts CreateBookmarkOptions) (*api.Bookmark, error) {
+func CreateLink(endpoint, apiKey string, opts CreateLinkOptions) (*api.Bookmark, error) {
 	client := api.NewClient(endpoint, apiKey)
 
 	req := api.CreateBookmarkRequest{
@@ -28,7 +28,7 @@ func CreateBookmark(endpoint, apiKey string, opts CreateBookmarkOptions) (*api.B
 	return client.CreateBookmark(req)
 }
 
-func ListBookmarks(endpoint, apiKey string, opts ListBookmarksOptions) (*api.ListBookmarksResponse, error) {
+func ListLinks(endpoint, apiKey string, opts ListLinksOptions) (*api.ListBookmarksResponse, error) {
 	client := api.NewClient(endpoint, apiKey)
 	return client.ListBookmarks(api.ListBookmarksParams{
 		Query:  opts.Query,

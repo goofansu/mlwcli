@@ -12,12 +12,12 @@ import (
 )
 
 type Options struct {
-	Login    LoginCommand    `command:"login" description:"Authenticate with a service"`
-	Logout   LogoutCommand   `command:"logout" description:"Remove credentials for a service"`
-	Bookmark BookmarkCommand `command:"bookmark" description:"Manage bookmarks (linkding)"`
-	Feed     FeedCommand     `command:"feed" description:"Manage feeds (miniflux)"`
-	Entry    EntryCommand    `command:"entry" description:"Manage entries (miniflux)"`
-	Page     PageCommand     `command:"page" description:"Manage pages (wallabag)"`
+	Login  LoginCommand  `command:"login" description:"Authenticate with a service"`
+	Logout LogoutCommand `command:"logout" description:"Remove credentials for a service"`
+	Link   LinkCommand   `command:"link" description:"Manage links (linkding)"`
+	Feed   FeedCommand   `command:"feed" description:"Manage feeds (miniflux)"`
+	Entry  EntryCommand  `command:"entry" description:"Manage entries (miniflux)"`
+	Page   PageCommand   `command:"page" description:"Manage pages (wallabag)"`
 }
 
 type BaseCommand struct {
@@ -71,12 +71,12 @@ type FeedAddCommand struct {
 	CategoryID int64 `long:"category-id" description:"Miniflux category ID (defaults to 1)"`
 }
 
-type BookmarkAddCommand struct {
+type LinkAddCommand struct {
 	BaseCommand
 	Args struct {
-		URL string `positional-arg-name:"url" description:"URL of the bookmark to add" required:"yes"`
+		URL string `positional-arg-name:"url" description:"URL of the link to add" required:"yes"`
 	} `positional-args:"yes"`
-	Notes string `long:"notes" description:"Optional notes for the bookmark"`
+	Notes string `long:"notes" description:"Optional notes for the link"`
 	Tags  string `long:"tags" description:"Optional tags separated by spaces"`
 }
 
@@ -91,7 +91,7 @@ type EntryListCommand struct {
 	FeedID  int64  `long:"feed-id" description:"Filter by feed ID"`
 }
 
-type BookmarkListCommand struct {
+type LinkListCommand struct {
 	BaseCommand
 	JSONOutputOptions
 	Limit  int    `long:"limit" description:"Maximum number of results" default:"10"`
@@ -99,10 +99,10 @@ type BookmarkListCommand struct {
 	Search string `long:"search" description:"Search query text"`
 }
 
-type BookmarkCommand struct {
+type LinkCommand struct {
 	BaseCommand
-	Add  BookmarkAddCommand  `command:"add" description:"Add a bookmark (linkding)"`
-	List BookmarkListCommand `command:"list" description:"List bookmarks (linkding)"`
+	Add  LinkAddCommand  `command:"add" description:"Add a link (linkding)"`
+	List LinkListCommand `command:"list" description:"List links (linkding)"`
 }
 
 type FeedCommand struct {
@@ -166,14 +166,14 @@ func (c *FeedAddCommand) Execute(_ []string) error {
 	return c.App.AddFeed(opts)
 }
 
-func (c *BookmarkAddCommand) Execute(_ []string) error {
-	opts := app.AddBookmarkOptions{
+func (c *LinkAddCommand) Execute(_ []string) error {
+	opts := app.AddLinkOptions{
 		URL:   c.Args.URL,
 		Notes: c.Notes,
 		Tags:  c.Tags,
 	}
 
-	return c.App.AddBookmark(opts)
+	return c.App.AddLink(opts)
 }
 
 func (c *EntryListCommand) Execute(_ []string) error {
@@ -196,15 +196,15 @@ func (c *EntryListCommand) Execute(_ []string) error {
 	return c.App.ListEntries(opts)
 }
 
-func (c *BookmarkListCommand) Execute(_ []string) error {
-	opts := app.ListBookmarksOptions{
+func (c *LinkListCommand) Execute(_ []string) error {
+	opts := app.ListLinksOptions{
 		Query:  c.Search,
 		Limit:  c.Limit,
 		Offset: c.Offset,
 		JSON:   c.JSON,
 		JQ:     c.JQ,
 	}
-	return c.App.ListBookmarks(opts)
+	return c.App.ListLinks(opts)
 }
 
 func (c *PageAddCommand) Execute(_ []string) error {
@@ -249,7 +249,7 @@ func (c *FeedAddCommand) Usage() string {
 	return "<url>"
 }
 
-func (c *BookmarkAddCommand) Usage() string {
+func (c *LinkAddCommand) Usage() string {
 	return "<url>"
 }
 
@@ -257,7 +257,7 @@ func (c *EntryListCommand) Usage() string {
 	return "[OPTIONS]"
 }
 
-func (c *BookmarkListCommand) Usage() string {
+func (c *LinkListCommand) Usage() string {
 	return "[OPTIONS]"
 }
 
@@ -285,8 +285,8 @@ func main() {
 	opts.Login.Linkding.App = application
 	opts.Login.Wallabag.App = application
 	opts.Logout.App = application
-	opts.Bookmark.Add.App = application
-	opts.Bookmark.List.App = application
+	opts.Link.Add.App = application
+	opts.Link.List.App = application
 	opts.Feed.Add.App = application
 	opts.Entry.List.App = application
 	opts.Page.Add.App = application
@@ -294,7 +294,7 @@ func main() {
 
 	parser := flags.NewParser(&opts, flags.HelpFlag|flags.PassDoubleDash)
 	parser.ShortDescription = "My command-line tool for agents"
-	parser.LongDescription = "Manage bookmarks, RSS feeds, and pages from terminal.\n\nExamples:\ncli login linkding --endpoint https://linkding.example.com --api-key YOUR_API_KEY\ncli login miniflux --endpoint https://miniflux.example.com --api-key YOUR_API_KEY\ncli login wallabag --endpoint https://wallabag.example.com --client-id ID --client-secret SECRET --username USER --password PASS\ncli bookmark add https://example.com --tags \"cool useful\"\ncli bookmark list\ncli feed add https://blog.example.com/feed.xml\ncli entry list\ncli page add https://example.com/article --archive\ncli page list"
+	parser.LongDescription = "Manage links, RSS feeds, and pages from terminal.\n\nExamples:\ncli login linkding --endpoint https://linkding.example.com --api-key YOUR_API_KEY\ncli login miniflux --endpoint https://miniflux.example.com --api-key YOUR_API_KEY\ncli login wallabag --endpoint https://wallabag.example.com --client-id ID --client-secret SECRET --username USER --password PASS\ncli link add https://example.com --tags \"cool useful\"\ncli link list\ncli feed add https://blog.example.com/feed.xml\ncli entry list\ncli page add https://example.com/article --archive\ncli page list"
 
 	if len(os.Args) == 1 {
 		parser.WriteHelp(os.Stdout)

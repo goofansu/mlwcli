@@ -12,7 +12,7 @@ go install github.com/goofansu/cli/cmd/cli@latest  # Install globally
 
 ## Architecture
 
-This is a Go CLI tool for managing bookmarks (Linkding) and RSS feeds (Miniflux). It uses `go-flags` for command parsing with a nested subcommand structure.
+This is a Go CLI tool for managing links (Linkding) and RSS feeds (Miniflux). It uses `go-flags` for command parsing with a nested subcommand structure.
 
 ### Package Structure
 
