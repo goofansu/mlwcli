@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Strubbl/wallabago/v8"
+	"github.com/Strubbl/wallabago/v9"
 )
 
 func LoadConfig(wallabagURL, clientID, clientSecret, userName, userPassword string) {

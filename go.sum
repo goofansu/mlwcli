@@ -1,5 +1,5 @@
-github.com/Strubbl/wallabago/v8 v8.2.1 h1:Atr4FZRI2By9fF0RROyr766yjaBgp2Wf9rgcqTdEMdw=
-github.com/Strubbl/wallabago/v8 v8.2.1/go.mod h1:l5JPfrq/CfyQKifC3fJ8o7gvjRQ02TMp8xjBTm9fJso=
+github.com/Strubbl/wallabago/v9 v9.0.19 h1:BBo/g4amr1oSi3nhQLG6drvnVJkEm9bR5lRFBSNNqsY=
+github.com/Strubbl/wallabago/v9 v9.0.19/go.mod h1:jLbUAe21UPf8gCWwMMlkJBGRDjVdX5kaEat+dXs1Ljo=
 github.com/itchyny/gojq v0.12.18 h1:gFGHyt/MLbG9n6dqnvlliiya2TaMMh6FFaR2b1H6Drc=
 github.com/itchyny/gojq v0.12.18/go.mod h1:4hPoZ/3lN9fDL1D+aK7DY1f39XZpY9+1Xpjz8atrEkg=
 github.com/itchyny/timefmt-go v0.1.7 h1:xyftit9Tbw+Dc/huSSPJaEmX1TVL8lw5vxjJLK4GMMA=
