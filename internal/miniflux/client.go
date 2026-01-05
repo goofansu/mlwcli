@@ -57,6 +57,11 @@ func Feeds(endpoint, apiKey string) (api.Feeds, error) {
 	return client.Feeds()
 }
 
+func SaveEntry(endpoint, apiKey string, entryID int64) error {
+	client := api.NewClient(endpoint, apiKey)
+	return client.SaveEntry(entryID)
+}
+
 func Validate(endpoint, apiKey string) error {
 	client := api.NewClient(endpoint, apiKey)
 	_, err := client.Me()

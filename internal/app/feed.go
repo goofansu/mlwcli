@@ -60,3 +60,12 @@ func (a *App) ListEntries(opts EntriesOptions) error {
 	}
 	return format.Output(output, opts.JSON, opts.JQ)
 }
+
+func (a *App) SaveEntry(entryID int64) error {
+	err := miniflux.SaveEntry(a.Config.Miniflux.Endpoint, a.Config.Miniflux.APIKey, entryID)
+	if err != nil {
+		return fmt.Errorf("failed to save entry: %w", err)
+	}
+	fmt.Printf("Entry %d saved successfully\n", entryID)
+	return nil
+}
