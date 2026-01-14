@@ -1,11 +1,11 @@
 ---
 name: mlwcli
-description: Unified command-line interface for managing links (linkding), feeds (miniflux), and pages (wallabag). Use for authentication, managing links, and managing feeds.
+description: Unified command-line interface for managing feeds (Miniflux), links (Linkding), and pages (Wallabag). Use for authentication, managing feeds, managing links, and managing pages.
 ---
 
 # mlwcli
 
-A unified command-line interface for managing links (via Linkding), feeds (via Miniflux), and pages (via Wallabag).
+A unified command-line interface for managing feeds (via Miniflux), links (via Linkding), and pages (via Wallabag).
 
 ## Instructions
 

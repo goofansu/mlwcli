@@ -13,9 +13,9 @@ import (
 
 type Options struct {
 	Auth  AuthCommand  `command:"auth" description:"Authentication commands"`
-	Link  LinkCommand  `command:"link" description:"Manage links (linkding)"`
 	Feed  FeedCommand  `command:"feed" description:"Manage feeds (miniflux)"`
 	Entry EntryCommand `command:"entry" description:"Manage feed entries (miniflux)"`
+	Link  LinkCommand  `command:"link" description:"Manage links (linkding)"`
 	Page  PageCommand  `command:"page" description:"Manage pages (wallabag)"`
 }
 
@@ -296,8 +296,8 @@ func main() {
 	opts.Page.List.App = application
 
 	parser := flags.NewParser(&opts, flags.HelpFlag|flags.PassDoubleDash)
-	parser.ShortDescription = "mlwcli - Manage Linkding, Miniflux, and Wallabag"
-	parser.LongDescription = "Manage Linkding, Miniflux, and Wallabag from terminal.\n\nExamples:\nmlwcli auth login\nmlwcli auth logout\nmlwcli link add https://example.com --tags \"cool useful\"\nmlwcli link list\nmlwcli feed add https://blog.example.com/feed.xml\nmlwcli entry list\nmlwcli page add https://example.com/article --archive\nmlwcli page list"
+	parser.ShortDescription = "mlwcli - Manage Miniflux, Linkding, and Wallabag"
+	parser.LongDescription = "Manage Miniflux, Linkding, and Wallabag from terminal.\n\nExamples:\nmlwcli auth login\nmlwcli auth logout\nmlwcli feed add https://example.com/feed.xml\nmlwcli entry list\nmlwcli link add https://example.com --tags \"cool useful\"\nmlwcli link list\nmlwcli page add https://example.com/article --archive\nmlwcli page list"
 
 	if len(os.Args) == 1 {
 		parser.WriteHelp(os.Stdout)

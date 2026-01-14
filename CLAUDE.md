@@ -12,7 +12,7 @@ go install github.com/goofansu/mlwcli/cmd/mlwcli@latest  # Install globally
 
 ## Architecture
 
-This is a Go CLI tool for managing links (Linkding), RSS feeds (Miniflux), and pages (Wallabag). It uses `go-flags` for command parsing with a nested subcommand structure.
+This is a Go CLI tool for managing RSS feeds (Miniflux), links (Linkding), and pages (Wallabag). It uses `go-flags` for command parsing with a nested subcommand structure.
 
 ### Package Structure
 
